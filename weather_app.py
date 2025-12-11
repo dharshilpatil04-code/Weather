@@ -1,12 +1,14 @@
 import streamlit as st
 import requests
 import matplotlib.pyplot as plt
+from collections import defaultdict
+import numpy as np
 
 API_KEY="743ee0b6bd1bab2967c9557226f68831"
 
 st.title("🌦️ Weather Visualization Dashboard")
 
-city = st.text_input("🏙️ Enter city name", "Bengaluru")
+city = st.text_input("🏙️ Enter city name")
 
 if st.button("Show Weather Data"):
     
@@ -52,15 +54,26 @@ if st.button("Show Weather Data"):
         conditions=[]
 
         for i in range(0,40,8):
+            if i >= len(data["list"]):
+                break
             entry=data["list"][i]
             temps.append(entry["main"]["temp"])
             humidity.append(entry["main"]["humidity"])
             pressure.append(entry["main"]["pressure"])
             wind.append(entry["wind"]["speed"])
-            min_temps.append(entry["main"]["temp_min"])
-            max_temps.append(entry["main"]["temp_max"])
             conditions.append(entry["weather"][0]["main"])
             days.append(entry["dt_txt"][:10])
+
+        daily_min = defaultdict(list)
+        daily_max = defaultdict(list)
+
+        for entry in data["list"]:
+            date = entry["dt_txt"][:10]
+            daily_min[date].append(entry["main"]["temp_min"])
+            daily_max[date].append(entry["main"]["temp_max"])
+
+        min_temps = [min(daily_min[d]) for d in days]
+        max_temps = [max(daily_max[d]) for d in days]
 
         st.subheader("🌡️ Temperature Trend")
         plt.rcParams['axes.prop_cycle'] = plt.cycler(color=['#FF5733'])
